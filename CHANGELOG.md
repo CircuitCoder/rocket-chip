@@ -17,16 +17,50 @@
 ## Version 1.5.0
 
 ### Added
+* Chisel 3.5 support
+* Hypervisor extension (https://github.com/chipsalliance/rocket-chip/pull/2841):
+    * Introduce virtualization of hart id for virtualized supervior OSs and virtualized user modes
+    * More work to be done on interrupt controllers, IOMMUs, etc.
+    * Prevent embedded extension and hypervisor both being enabled (follow-up PR https://github.com/chipsalliance/rocket-chip/pull/2988)
+* Fault if reserved bits D/A/U of page table entry are set to 1 (https://github.com/chipsalliance/rocket-chip/pull/2895)
+* mnie bit added to mnstatus (https://github.com/chipsalliance/rocket-chip/pull/2904)
+* `WithCoherentBusTopology` added to `BaseFPGAConfig` (https://github.com/chipsalliance/rocket-chip/pull/2787)
+* Add support for timebase-frequency in the cpus node of the Device Tree (https://github.com/chipsalliance/rocket-chip/pull/2782)
+
 ### Changed
-
-
+* TLToAXI4: b-channel acks are now stalled for if blocked for 7 consecutive cycles (https://github.com/chipsalliance/rocket-chip/pull/2805)
+* Cacheable ROMs: treat acquire-able read-only memory as cacheable (https://github.com/chipsalliance/rocket-chip/pull/2808)
+* modularly wrap the value of `nextSelectEnc` in the `ReadyValidCancelRRArbiter` when Round-Robin parameters are `rr=true && !isPow2(n)` (https://github.com/chipsalliance/rocket-chip/pull/2798)
+* Changed TLMonitor to check the correct opcode for a (so far unused) B channel Get message (https://github.com/chipsalliance/rocket-chip/pull/2788)
+* D$: drive Tilelink C-Channel AMBA_PROT bits last (https://github.com/chipsalliance/rocket-chip/pull/2770/)
 
 ### Fixed
 * assert HasFSDirty false (https://github.com/chipsalliance/rocket-chip/pull/2997)
-* Prevent selection of both Embedded and Hypervior extensions (https://github.com/chipsalliance/rocket-chip/pull/2988)
 * VSStatus is now read-only and dirty when RoCC is enabled https://github.com/chipsalliance/rocket-chip/pull/2984
-* removed RegEnable explicit arguments in preparation for changes in Chisel 3.6 https://github.com/chipsalliance/rocket-chip/pull/2986
-* Copy EICG wrapper from vsrc when using Clock Gate Model  https://github.com/chipsalliance/rocket-chip/pull/2969/
+* removed RegEnable explicit arguments in preparation for changes in Chisel 3.6 (https://github.com/chipsalliance/rocket-chip/pull/2986)
+* Copy EICG wrapper from vsrc when using Clock Gate Model  (https://github.com/chipsalliance/rocket-chip/pull/2969/)
+* PTW and TLB fault prioritization:
+    * Misaligned faults (https://github.com/chipsalliance/rocket-chip/pull/2926):
+        * We cannot check if the memory address has side effects to take a misaligned exception if a PTW doesn't finish within a valid PTE.
+        * Therefore, misaligned faults are now given lowest priority.
+    * Access exceptions (https://github.com/chipsalliance/rocket-chip/pull/2916):
+        * Separate access faults into faults for accessing Page Table Entries and faults for bad Physical Page Numbers.
+* hoist `r_valid_vec` onto a register before L2TLB refill `wmask` (https://github.com/chipsalliance/rocket-chip/pull/2868 https://github.com/chipsalliance/rocket-chip/pull/2856)
+* Dedpulicate to one OptimizationBarrier per TLBEntry (https://github.com/chipsalliance/rocket-chip/pull/2833)
+* D$: block until ReleaseAck from slave acknowledging completion of writeback (https://github.com/chipsalliance/rocket-chip/pull/2832)
+* dtim: convert PutPartials to PutFulls when mask is full to avoid RMW (https://github.com/chipsalliance/rocket-chip/pull/2822)
+* dtim: don't let `dmem.req.bits.cmd` become X which causes X-prop (https://github.com/chipsalliance/rocket-chip/pull/2818)
+* Jam WidthWidget until write to prevent leaking of X output (https://github.com/chipsalliance/rocket-chip/pull/2815)
+* Don't cover non-existent U-mode counters (https://github.com/chipsalliance/rocket-chip/pull/2817)
+* supress SCIE assertion when instruction not valid (https://github.com/chipsalliance/rocket-chip/pull/2816)
+* fixed an issue where store fails to take effect if it is immediately followed by a load to the same address under an ECC error condition (https://github.com/chipsalliance/rocket-chip/pull/2804)
+* ReadyValidCancelRRArbiter: fixed an issue where round-robin select rotated incorrectly when `rr=true` (https://github.com/chipsalliance/rocket-chip/pull/2771)
+* TraceGen: now observes `dmem.ordered` when attempting a fence (https://github.com/chipsalliance/rocket-chip/pull/2779)
+
+
+### Removed
+* Remove unrecoverable non-maskable interrupts (https://github.com/chipsalliance/rocket-chip/pull/2904)
+* Remove wake support (https://github.com/chipsalliance/rocket-chip/pull/2847)
 
 
 ## Version 1.4.0
@@ -36,8 +70,8 @@ The changelog for this version is merely illustrative of the features added sinc
 Future versions of the changelog should follow the format here https://keepachangelog.com/en/1.0.0/
 
 * Chisel 3.4.x and FIRRTL 1.4 compatible.
-  * Rely on building from source by default https://github.com/chipsalliance/rocket-chip/pull/2617
-  * bump to 3.4.0 and FIRRTL 1.4.0 https://github.com/chipsalliance/rocket-chip/pull/2694
+  * Rely on building from source by default (https://github.com/chipsalliance/rocket-chip/pull/2617)
+  * bump to 3.4.0 and FIRRTL 1.4.0 (https://github.com/chipsalliance/rocket-chip/pull/2694)
 * Verilator 4.028 compatible (https://github.com/chipsalliance/rocket-chip/pull/2377)
 * submodules
   * torture https://github.com/ucb-bar/riscv-torture/tree/77195ab12aefc373ca688e0a9c4d710c13191341
@@ -53,12 +87,12 @@ Future versions of the changelog should follow the format here https://keepachan
 ### PR Release Notes
 
 #### Rocket
-* [CSR] add vcsr and move vxrm/vxstat from fcsr to that register set (https://github.com/chipsalliance/rocket-chip/pull/2400, #2422)
+* [CSR] add vcsr and move vxrm/vxstat from fcsr to that register set (https://github.com/chipsalliance/rocket-chip/pull/2400, https://github.com/chipsalliance/rocket-chip/pull/2422)
 * [CSR] disallow writes to MSTATUS.XS (https://github.com/chipsalliance/rocket-chip/pull/2508)
 * [CSR] expand TracedInstruction.cause to xLen (https://github.com/chipsalliance/rocket-chip/pull/2548)
 * [CSR][mstatus] implement updated MPRV from priv-1.12 (https://github.com/chipsalliance/rocket-chip/pull/2206)
 * [CSR] add `mcountinhibit from priv-1.11 (https://github.com/chipsalliance/rocket-chip/pull/2693)
-  * ignore PAUSE when `mcountinhibit(0)` === 1 (#2700)
+  * ignore PAUSE when `mcountinhibit(0)` === 1 (https://github.com/chipsalliance/rocket-chip/pull/2700)
 * [CSR] Comply with priv spec by resetting and initializing mcause to 0 (https://github.com/chipsalliance/rocket-chip/pull/2333)
 * [events] add SuperscalarEventSets (https://github.com/chipsalliance/rocket-chip/pull/2337, https://github.com/chipsalliance/rocket-chip/pull/2506)
 * [events] make fields public for tapping signals (https://github.com/chipsalliance/rocket-chip/pull/2464, https://github.com/chipsalliance/rocket-chip/pull/2524)
@@ -72,11 +106,11 @@ Future versions of the changelog should follow the format here https://keepachan
   * reduce latency on inclusion and coherence misses by allowing D$ to voluntarily release (aka "noisy drop") cache lines (https://github.com/chipsalliance/rocket-chip/pull/2696)
     * follow-up to fix deadlock (https://github.com/chipsalliance/rocket-chip/pull/2714)
     * follow-up to fix performance (https://github.com/chipsalliance/rocket-chip/pull/2739)
-* distinguish a supervisor mode that does not use MMU/VM (https://github.com/chipsalliance/rocket-chip/pull/2422, #2499)
+* distinguish a supervisor mode that does not use MMU/VM (https://github.com/chipsalliance/rocket-chip/pull/2422, https://github.com/chipsalliance/rocket-chip/pull/2499)
 * [hartid]
   * fixed an issue where the Rocket core's placement would be impacted by non-constant hartid (https://github.com/chipsalliance/rocket-chip/pull/2432)
   * add a diplomatic node for assigning hartid (https://github.com/chipsalliance/rocket-chip/pull/2447)
-* [Replacement][PseudoLRU] fix performance issue with PseudoLRU for replacements when number of ways is not a power of 2 (https://github.com/chipsalliance/rocket-chip/pull/2493, #2498)
+* [Replacement][PseudoLRU] fix performance issue with PseudoLRU for replacements when number of ways is not a power of 2 (https://github.com/chipsalliance/rocket-chip/pull/2493, https://github.com/chipsalliance/rocket-chip/pull/2498)
 * [Replacement][d$] configure replacement policy with parameter to indicate wheteher policy is used on a per-set basis or a global basis (https://github.com/chipsalliance/rocket-chip/pull/2656)
 * [PTW]
   * replace round robin arbitration with static arbitration (https://github.com/chipsalliance/rocket-chip/pull/2433)
@@ -91,7 +125,7 @@ Future versions of the changelog should follow the format here https://keepachan
   * check PutPartial support separately from PutFull (https://github.com/chipsalliance/rocket-chip/pull/2503)
   * fix a rare refill/invalidate race condition (https://github.com/chipsalliance/rocket-chip/pull/2534)
   * configure L1 D/I TLBs by set, entry, and replacement policy (https://github.com/chipsalliance/rocket-chip/pull/2574, https://github.com/chipsalliance/rocket-chip/pull/2621)
-  * add params nTLBBasePageSectors and nTLBSuperpages for both I and D TLBs https://github.com/chipsalliance/rocket-chip/pull/2595
+  * add params nTLBBasePageSectors and nTLBSuperpages for both I and D TLBs (https://github.com/chipsalliance/rocket-chip/pull/2595)
 * [CoreMonitor]
   * add privilege mode and exception signals (https://github.com/chipsalliance/rocket-chip/pull/2387)
   * now prints only retired instructions (https://github.com/chipsalliance/rocket-chip/pull/2372)
@@ -100,7 +134,7 @@ Future versions of the changelog should follow the format here https://keepachan
 * [FPU] Zfh extension, option for Half-Precision unit (https://github.com/chipsalliance/rocket-chip/pull/2723)
   * replaces `singleIn` and `singleOut` with `typeTagIn` and `typeTagOut`
 * preliminary RV32Zfh extension support (https://github.com/chipsalliance/rocket-chip/pull/2359)
-* [RVV] -> 0.9 -> 1.0 (#2477, #2484, #2396, #2552, #2576)
+* [RVV] -> 0.9 -> 1.0 (https://github.com/chipsalliance/rocket-chip/pull/2477, https://github.com/chipsalliance/rocket-chip/pull/2484, https://github.com/chipsalliance/rocket-chip/pull/2396, https://github.com/chipsalliance/rocket-chip/pull/2552, https://github.com/chipsalliance/rocket-chip/pull/2576)
   * Fractional LMUL
   * Tail-agnostic/mask-agnostic bits
   * EEW loads/stores
@@ -116,11 +150,11 @@ Future versions of the changelog should follow the format here https://keepachan
 #### Devices
 * [PLIC] add support for PLIC elaboration even when nDevices == 0 (https://github.com/chipsalliance/rocket-chip/pull/2351)
 * [PLIC] fix off-by-one for priority register description (https://github.com/chipsalliance/rocket-chip/pull/2718)
-* [BuildInDevices] introduce case class parameters to Zero and Error device https://github.com/chipsalliance/rocket-chip/pull/2684
+* [BuildInDevices] introduce case class parameters to Zero and Error device (https://github.com/chipsalliance/rocket-chip/pull/2684)
   * make instantiation of buffers optional
   * allow for optional instantiation of CacheCork
 * [BasicBusBlocker] convert to chisel3, add scala-doc, add factory companion object (https://github.com/chipsalliance/rocket-chip/pull/2630)
-* [PhysicalFilter] added scaladoc and `RegFieldDesc` (#2685)
+* [PhysicalFilter] added scaladoc and `RegFieldDesc` (https://github.com/chipsalliance/rocket-chip/pull/2685)
 * [BEU]
   * added a Device Tree description for the bus error unit (https://github.com/chipsalliance/rocket-chip/pull/2373)
   * report Corrupt+Denied on I-Fetch (https://github.com/chipsalliance/rocket-chip/pull/2482)
@@ -140,12 +174,12 @@ Future versions of the changelog should follow the format here https://keepachan
   * deprecate SyncResetSynchronizerShiftReg
 * [SynchronizerPrimitiveShiftReg] correct the dedup behavior for the *ResetSynchronizerPrimitiveShiftReg so you only end up with one copy (https://github.com/chipsalliance/rocket-chip/pull/2547)
 * add partial multiple reset scheme support (https://github.com/chipsalliance/rocket-chip/pull/2375)
-* AsyncResetReg: use chisel3 async resets (#2397)
+* AsyncResetReg: use chisel3 async resets (https://github.com/chipsalliance/rocket-chip/pull/2397)
 * Async Reset support for Atomics, FPU, and TLBroadcast (https://github.com/chipsalliance/rocket-chip/pull/2362)
 * [ResetStretcher][PRCI] add reset stretcher for Async Reset systems (https://github.com/chipsalliance/rocket-chip/pull/2566)
 * ClockGroupDriverParameters: allow for a configurable drive function for driving asynchronous clock groups with IO other than the implicit clock (https://github.com/chipsalliance/rocket-chip/pull/2319)
 * [ClockDivider] fixed bug where clock divider's source and sink functions always divided by two (https://github.com/chipsalliance/rocket-chip/pull/2610)
-* [InterruptBusWrapper] update synchronizer API https://github.com/chipsalliance/rocket-chip/pull/2640
+* [InterruptBusWrapper] update synchronizer API (https://github.com/chipsalliance/rocket-chip/pull/2640)
   * replaces using `IntXing` in a `synchronize` method with `to` and `from` methods
   * this is to ensure synchronized registers are always put in the destination clock domain
 
@@ -196,7 +230,7 @@ Future versions of the changelog should follow the format here https://keepachan
 * [stage] expose Stage's `--target-dir` to Config (https://github.com/chipsalliance/rocket-chip/pull/2725)
 * [Transforms][Lint] add `RenameDesiredNames` transform and `LintConflictingModuleNames` Lint rule (https://github.com/chipsalliance/rocket-chip/pull/2452)
   * also adds RenameModulesAspect that can be used to emit name overrides and a LintConflictingModuleNamesAspect to collect DesiredNameAnnotations to be checked by the lint pass.
-* [ElaborationArtefactAnnotation] add `ElaborationArtefactAnnotation` - an API similar to `ElaborationArtefacts` (#2727)
+* [ElaborationArtefactAnnotation] add `ElaborationArtefactAnnotation` - an API similar to `ElaborationArtefacts` (https://github.com/chipsalliance/rocket-chip/pull/2727)
   * this API is for assuring metadata has correct instance paths and signal names
   * allow renames to multiple targets for `MemoryPathToken` (https://github.com/chipsalliance/rocket-chip/pull/2729)
 
@@ -223,13 +257,13 @@ Future versions of the changelog should follow the format here https://keepachan
    * Remove usage of un-consumed `Annotated.idMapping` and delete associated application and annotation class.
 * [AXI4Deinterleaver] support asynchronous reset  (https://github.com/chipsalliance/rocket-chip/pull/2479/)
 * [AXI4Deinterleaver] add buffer when optimized away (https://github.com/chipsalliance/rocket-chip/pull/2642, https://github.com/chipsalliance/rocket-chip/pull/2652)
-* [AXIS] allow masters to carry resources (#2443)
-* [SRAM] accomodate address ranges that require more than 32 bits https://github.com/chipsalliance/rocket-chip/pull/2491
-* [SRAM] Add public accessors for SRAM modules https://github.com/chipsalliance/rocket-chip/pull/2646
-* [SimAXIMem] introduce `base` address argument to constructor https://github.com/chipsalliance/rocket-chip/pull/2628
-* [TLRAM] improved cycle time for designs involving TLRAM https://github.com/chipsalliance/rocket-chip/pull/2582
+* [AXIS] allow masters to carry resources (https://github.com/chipsalliance/rocket-chip/pull/2443)
+* [SRAM] accomodate address ranges that require more than 32 bits (https://github.com/chipsalliance/rocket-chip/pull/2491)
+* [SRAM] Add public accessors for SRAM modules (https://github.com/chipsalliance/rocket-chip/pull/2646)
+* [SimAXIMem] introduce `base` address argument to constructor )https://github.com/chipsalliance/rocket-chip/pull/2628)
+* [TLRAM] improved cycle time for designs involving TLRAM (https://github.com/chipsalliance/rocket-chip/pull/2582)
 * TLMonitors: formal verification support and additional constraints
-  * TLVIP2 (https://github.com/chipsalliance/rocket-chip/pull/2271, #2505, #2754, #2537, #2573)
+  * TLVIP2 (https://github.com/chipsalliance/rocket-chip/pull/2271, https://github.com/chipsalliance/rocket-chip/pull/2505, https://github.com/chipsalliance/rocket-chip/pull/2754, https://github.com/chipsalliance/rocket-chip/pull/2537, https://github.com/chipsalliance/rocket-chip/pull/2573)
   * change `isShrink` `TLPermissions` assertion on C channel to `isReport` (https://github.com/chipsalliance/rocket-chip/pull/2675)
 * TLEdge: add require failure messages for TL edges (https://github.com/chipsalliance/rocket-chip/pull/2313/)
 * minor tilelink v1 parameter fixes for setName and probe rendering (https://github.com/chipsalliance/rocket-chip/pull/2428)
@@ -237,13 +271,13 @@ Future versions of the changelog should follow the format here https://keepachan
 * [TLParameters] functions to look at emits parameters (https://github.com/chipsalliance/rocket-chip/pull/2572)
 * [Parameters] replace cover function with mincover (https://github.com/chipsalliance/rocket-chip/pull/2571)
 * [APBToTL] only assert address alignment when data is ready and valid on a-channel (https://github.com/chipsalliance/rocket-chip/pull/2314)
-* [TLBroadcast][TLSourceShrinker][TLCacheCork][SBA][$] Drive or pass through TL user bits (#2457, #2448, #2383, #2446)
+* [TLBroadcast][TLSourceShrinker][TLCacheCork][SBA][$] Drive or pass through TL user bits (https://github.com/chipsalliance/rocket-chip/pull/2457, https://github.com/chipsalliance/rocket-chip/pull/2448, https://github.com/chipsalliance/rocket-chip/pull/2383, https://github.com/chipsalliance/rocket-chip/pull/2446)
 * [TLBroadcast] add API to create Probe filters for Broadcast coherence manager  (https://github.com/chipsalliance/rocket-chip/pull/2509)
 * [TLBroadcast] fixed a Generator bug when instantiated with no inner cache (https://github.com/chipsalliance/rocket-chip/pull/2516)
 * [TLBroadcast] Add control parameters for control interface (https://github.com/chipsalliance/rocket-chip/pull/2519)
 * make it possible to filter with Banked Broadcast Hub (https://github.com/chipsalliance/rocket-chip/pull/2545)
-* [TLSourceShrinker] preserve meta data when no shrinkage is required (#2466)
-* [TLFragmenter] ensure Fragmenter raises corrupt signal when raising denied (#2468)
+* [TLSourceShrinker] preserve meta data when no shrinkage is required (https://github.com/chipsalliance/rocket-chip/pull/2466)
+* [TLFragmenter] ensure Fragmenter raises corrupt signal when raising denied (https://github.com/chipsalliance/rocket-chip/pull/2468)
 * [Tilelink][Arbiter][Xbar][ReadyValidCancel] Add new API that replaces `valid` with `earlyValid` and `lateCancel` to fix a timing path for A-channel requests (https://github.com/chipsalliance/rocket-chip/pull/2480, https://github.com/chipsalliance/rocket-chip/pull/2488)
 * [TLCacheCork] prevent cache block write size from exceeding read size (https://github.com/chipsalliance/rocket-chip/pull/2527)
 * [TLCacheCork] switch CacheCork class to take a case class parameter (https://github.com/chipsalliance/rocket-chip/pull/2684)
@@ -263,7 +297,7 @@ Future versions of the changelog should follow the format here https://keepachan
   * allow users to access Lazy Module nodes (https://github.com/chipsalliance/rocket-chip/pull/2301)
   * JunctionNodes now support configurable up/down ratio (https://github.com/chipsalliance/rocket-chip/pull/2430)
   * dynamic and remote order: fix QoR in designs with large physical address maps (https://github.com/chipsalliance/rocket-chip/pull/2461)
-  * [AddressSet] fix a bug where duplicated AddressSets would cause incorrect widening when unify is called. (#2502)
+  * [AddressSet] fix a bug where duplicated AddressSets would cause incorrect widening when unify is called. (https://github.com/chipsalliance/rocket-chip/pull/2502)
   * [LazyModule]
     * mark LazyModules for inlining such as nodes with circuit identity (inputs are outputted unchanged) (https://github.com/chipsalliance/rocket-chip/pull/2579)
       * inline xbar patch: (https://github.com/chipsalliance/rocket-chip/pull/2639)
@@ -272,11 +306,11 @@ Future versions of the changelog should follow the format here https://keepachan
   * [Nodes] documentation for Nodes (https://github.com/chipsalliance/rocket-chip/pull/2604)
   * [Nodes] replace `bundleSafeNow` guard with `instantiated` guard (https://github.com/chipsalliance/rocket-chip/pull/2680)
   * tutorial for adder (https://github.com/chipsalliance/rocket-chip/pull/2615)
-  * [aop][Select] add Select Library API (#2674)
+  * [aop][Select] add Select Library API (https://github.com/chipsalliance/rocket-chip/pull/2674)
   * [DTS] allow node names up to 48 bytes (https://github.com/chipsalliance/rocket-chip/pull/2570)
   * [AddressAdjuster] and RegionReplicator now work on prefixes (not chip id) (https://github.com/chipsalliance/rocket-chip/pull/2430)
       * removes MultiChipMaskKey
-  * [AddressAdjuster] patches (#2470)
+  * [AddressAdjuster] patches (https://github.com/chipsalliance/rocket-chip/pull/2470)
     * user can now supply a default local base address for reporting manager address metadata other than the 0th region
     * let local and remote legs have different user bits using <:= operator
     * allow for no fifo ordering on the replicated region
@@ -289,7 +323,7 @@ Future versions of the changelog should follow the format here https://keepachan
 #### Object Model
 * [OMMemoryMap] require register map to only go to one memory region (https://github.com/chipsalliance/rocket-chip/pull/2496)
 * [OMErrorDevice] added to Object Model (https://github.com/chipsalliance/rocket-chip/pull/2410, https://github.com/chipsalliance/rocket-chip/pull/2411)
-* added IdRange, IDMap to include source ids in object model (#2495)
+* added IdRange, IDMap to include source ids in object model (https://github.com/chipsalliance/rocket-chip/pull/2495)
 * added L2UTLB entries and memory (https://github.com/chipsalliance/rocket-chip/pull/2606)
 * [OMISA] Add OMVectorExtension.vstartALU field (https://github.com/chipsalliance/rocket-chip/pull/2578)
 * [RegFieldDesc]
@@ -307,11 +341,11 @@ Future versions of the changelog should follow the format here https://keepachan
   * Customizable field unification, Default for bulk assignments, Field and Key class required (https://github.com/chipsalliance/rocket-chip/pull/2318)
   * Use BundleMap for AMBA protocols (https://github.com/chipsalliance/rocket-chip/pull/2326)
   * various bug fixes to TL user fields (https://github.com/chipsalliance/rocket-chip/pull/2335)
-* [FixChisel3] Added some scaladoc commentary to the operators :<>, :<=, :=> to explain what they do and the rationale for their creation. (#2339)
-* [util] Add utilities for bitwise shifts by signed shift amounts (#2477)
+* [FixChisel3] Added some scaladoc commentary to the operators :<>, :<=, :=> to explain what they do and the rationale for their creation. (https://github.com/chipsalliance/rocket-chip/pull/2339)
+* [util] Add utilities for bitwise shifts by signed shift amounts (https://github.com/chipsalliance/rocket-chip/pull/2477)
 * [TLBusWrapper] more stability to internal wire names (https://github.com/chipsalliance/rocket-chip/pull/2515)
 * [LazyRoCC] convert LazyRoCC to chisel3 (https://github.com/chipsalliance/rocket-chip/pull/2553)
-* [OptimizationBarrier] give the module a name in generated verilog (#2507)
+* [OptimizationBarrier] give the module a name in generated verilog (https://github.com/chipsalliance/rocket-chip/pull/2507)
 * add test enable pin to Clock Gate (https://github.com/chipsalliance/rocket-chip/pull/2087)
 * [RecordMap] addd as an API for better diplomatic IO naming https://github.com/chipsalliance/rocket-chip/pull/2486
   * used to get easier to follow Clock Group signal names https://github.com/chipsalliance/rocket-chip/pull/2528
@@ -319,7 +353,7 @@ Future versions of the changelog should follow the format here https://keepachan
 * [IDPool] add `lateValid` and `revocableSelect` to shift the deep logic cones from before the `valid/selec` registers to after the `bitmap` register (https://github.com/chipsalliance/rocket-chip/pull/2673, https://github.com/chipsalliance/rocket-chip/pull/2677)
 * [IDPool] infer widths (https://github.com/chipsalliance/rocket-chip/pull/2679)
 * Make AsyncValidSync a RawModule (https://github.com/chipsalliance/rocket-chip/pull/2352)
-* compiler warning fixes (#2357, #2356, #2355, #2354, #2353, #2378, #2379, #2380, #2442, #2567, #2757, #2758)
+* compiler warning fixes (https://github.com/chipsalliance/rocket-chip/pull/2357, https://github.com/chipsalliance/rocket-chip/pull/2356, https://github.com/chipsalliance/rocket-chip/pull/2355, https://github.com/chipsalliance/rocket-chip/pull/2354, https://github.com/chipsalliance/rocket-chip/pull/2353, https://github.com/chipsalliance/rocket-chip/pull/2378, https://github.com/chipsalliance/rocket-chip/pull/2379, https://github.com/chipsalliance/rocket-chip/pull/2380, https://github.com/chipsalliance/rocket-chip/pull/2442, https://github.com/chipsalliance/rocket-chip/pull/2567, https://github.com/chipsalliance/rocket-chip/pull/2757, https://github.com/chipsalliance/rocket-chip/pull/2758)
 * [SCIE] fix width mismatch assignment lint warning from VCS (https://github.com/chipsalliance/rocket-chip/pull/2563)
 * Initial scalatest flow support and aspect generation (https://github.com/chipsalliance/rocket-chip/pull/2309/, https://github.com/chipsalliance/rocket-chip/pull/2517)
 * [linting] add Chisel Linting Framework (https://github.com/chipsalliance/rocket-chip/pull/2435)
@@ -329,11 +363,11 @@ Future versions of the changelog should follow the format here https://keepachan
   * enable ProcedureSyntax (https://github.com/chipsalliance/rocket-chip/pull/2651)
 * mdoc infrastructure (https://github.com/chipsalliance/rocket-chip/pull/2615)
 * [PlusArg]
-  * support for no-default PlusArgs and string-valued PlusArgs (#2453)
-  * fix VCS lint warning for plusarg default bit width (#2558, #2562)
+  * support for no-default PlusArgs and string-valued PlusArgs (https://github.com/chipsalliance/rocket-chip/pull/2453)
+  * fix VCS lint warning for plusarg default bit width (https://github.com/chipsalliance/rocket-chip/pull/2558, https://github.com/chipsalliance/rocket-chip/pull/2562)
 * decode: improve runtime (https://github.com/chipsalliance/rocket-chip/pull/2462)
-* Switch to using Github Actions (https://github.com/chipsalliance/rocket-chip/pull/2465, #2472, #2530, #2536)
-* Some Travis changes were made, but travis is dropped in later releases (#2451, #2454, #2455, #2490)
+* Switch to using Github Actions (https://github.com/chipsalliance/rocket-chip/pull/2465, https://github.com/chipsalliance/rocket-chip/pull/2472, https://github.com/chipsalliance/rocket-chip/pull/2530, https://github.com/chipsalliance/rocket-chip/pull/2536)
+* Some Travis changes were made, but travis is dropped in later releases (https://github.com/chipsalliance/rocket-chip/pull/2451, https://github.com/chipsalliance/rocket-chip/pull/2454, https://github.com/chipsalliance/rocket-chip/pull/2455, https://github.com/chipsalliance/rocket-chip/pull/2490)
 * Add scalatest to a bucket for regression testing (https://github.com/chipsalliance/rocket-chip/pull/2511)
 * RTLSim trace log:
   * fixed an issue where the wrong destination register being dumped in the RTLSim trace log (https://github.com/chipsalliance/rocket-chip/pull/2409/)
@@ -350,8 +384,8 @@ Future versions of the changelog should follow the format here https://keepachan
 
 ## Version 1.3.0
 
-This version exists as a branch, but seems to be largely synonymous with 1.2. There is no release for this version.
+This version exists as a branch, but seems to be largely synonymous with 1.2. There are no release notes or maintenance for this version.
 
 ## Version 1.2.0
 
-There are no existing release notes for these versions.
+There are no existing release notes for this and previous versions.
